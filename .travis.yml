@@ -1,5 +1,4 @@
 language: go
-before_deploy: make package
 deploy:
   provider: releases
   api_key:

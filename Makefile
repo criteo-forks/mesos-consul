@@ -3,7 +3,7 @@ NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' main.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' main.go)
 DEPS = $(shell go list -f '{{range .TestImports}}{{.}} {{end}}' ./...)
 
-all: deps build
+all: deps build xcompile
 
 deps:
 	go get -d -v ./...
@@ -21,7 +21,10 @@ test: deps
 	go test $(TEST) $(TESTARGS) -timeout=30s -parallel=4
 	go vet $(TEST)
 
-xcompile: deps test
+xcompile_deps: deps
+	go get github.com/mitchellh/gox
+
+xcompile: deps xcompile_deps
 	@rm -rf build/
 	@mkdir -p build
 	gox \
