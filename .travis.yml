@@ -8,3 +8,14 @@ go:
 install: go get -v -t ./....
 
 script: go test -v ./...
+
+before_deploy: make package
+deploy:
+  provider: releases
+  api_key:
+    secure: QvVp76F68zh7yKtAaEwh582MxI4UCIhs1vUDknJPSNbYUM6H5oT2epTbXVpQaRTjfQVcT0ymgoxVXM2OERE7WhL5uYtHKmXapUs9B3AMwZSmR5a8nJMsHVxLGJigPswVvEniTEuSZ/AHym/46//StZAei1NIMUCvcSTQj5eJn0AMWFAxTm48xJDFK7VOY0ewRYbZRsIL6lePxozTbrdqHapot8jd1AVqY/EJOvaJmW63o45arESl3HiGN6UPJa9z2HjQo1Gu9vWHOWRx0eUCp7wS4kpRjoqSRpj8K2T9FixzJoZo7UIbdYLz2E+GYaLguMhALZ1l2s3NEXliDhAjmOiio1VpW80fjW5mAx5RPpaRVQJRdU4prSTb24gRcNnfNGCPYX3JuwfftM5ubPmx4kcbDcZI7s1LR3Np4axSWJrgZ5PBxNtmSEAdx/x7YC/XxOnU7yFwLCduxAntsJIInEClXuArZvaDO+ZE8KLHdovQDDX1b5KZGxwy9OJb4b7tvb1om1Us657f0/yPf2fKR8hLkf54PSHPDmT55xpdpy5WLgc7qX9lVAw20qtYosn3/vUHIoWXmUPPT/7DyycJl7G0CSx4g9vWBQxB0Z3GIIHxbc/F+sMAhZ8og+9JgZHhMwvfU+SPXjo5XtRWb/PCq2iNdE/GY2mf/hQih6egmn0=
+  file: build/tgz/*.tar.gz
+  file_glob: true
+  on:
+    repo: criteo-forks/mesos-consul
+    tags: true
