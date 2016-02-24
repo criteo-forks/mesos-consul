@@ -104,7 +104,7 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 
 	registered := false
 
-	tname := cleanName(t.Name, m.Separator)
+	tname := cleanName(t.ID, m.Separator)
 	log.Debugf("original TaskName : (%v)", tname)
 	if t.Label("overrideTaskName") != "" {
 		tname = cleanName(t.Label("overrideTaskName"), m.Separator)
