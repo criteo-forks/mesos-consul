@@ -15,8 +15,14 @@ func cleanName(name string, separator string) string {
 		log.Warn(err)
 		return name
 	}
+	id, err_bis := regexp.Compile("\\.[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$")
+	if err_bis != nil {
+		log.Warn(err_bis)
+		return name
+	}
 
-	s := reg.ReplaceAllString(name, "-")
+	without_id := id.ReplaceAllString(name, "")
+	s := reg.ReplaceAllString(without_id, "-")
 
 	return strings.ToLower(strings.Replace(s, "_", separator, -1))
 }
