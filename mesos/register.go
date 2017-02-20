@@ -103,8 +103,6 @@ func (m *Mesos) registerHost(s *registry.Service) {
 func (m *Mesos) registerTask(t *state.Task, agent string) {
 	var tags []string
 
-	registered := false
-
 	tname := cleanName(t.ID, m.Separator)
 	log.Debugf("original TaskName : (%v)", tname)
 	if t.Label("overrideTaskName") != "" {
@@ -160,7 +158,6 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 				}),
 				Agent: toIP(agent),
 			})
-			registered = true
 		}
 	}
 
