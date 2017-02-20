@@ -2,6 +2,7 @@ package mesos
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -131,10 +132,6 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 		discoveryPort := state.DiscoveryPort(t.DiscoveryInfo.Ports.DiscoveryPorts[key])
 		serviceName := discoveryPort.Name
 		servicePort := strconv.Itoa(discoveryPort.Number)
-		log.Debugf("%+v framework has %+v as a name for %+v port",
-			t.Name,
-			discoveryPort.Name,
-			discoveryPort.Number)
 		pl := discoveryPort.Label("tags")
 		if pl != "" {
 			porttags = strings.Split(discoveryPort.Label("tags"), ",")
@@ -142,9 +139,18 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 			porttags = []string{}
 		}
 		if discoveryPort.Name != "" {
+			log.Debugf("%+v framework has %+v as a name for %+v port",
+				t.Name,
+				discoveryPort.Name,
+				discoveryPort.Number)
+			named_service := cleanName(tname+"-"+discoveryPort.Name, m.Separator)
+			log.Debugf("%+v: changing the service name from %+v to %+v",
+				t.Name,
+				tname,
+				named_service)
 			m.Registry.Register(&registry.Service{
 				ID:      fmt.Sprintf("%s:%s:%s:%s:%d", m.ServiceIdPrefix, agent, tname, address, discoveryPort.Number),
-				Name:    tname,
+				Name:    named_service,
 				Port:    toPort(servicePort),
 				Address: address,
 				Tags:    append(append(tags, serviceName), porttags...),
@@ -159,24 +165,27 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 	}
 
 	if t.Resources.PortRanges != "" {
-		for _, port := range t.Resources.Ports() {
-			m.Registry.Register(&registry.Service{
-				ID:      fmt.Sprintf("%s:%s:%s:%s:%s", m.ServiceIdPrefix, agent, tname, address, port),
-				Name:    tname,
-				Port:    toPort(port),
-				Address: address,
-				Tags:    tags,
-				Check: GetCheck(t, &CheckVar{
-					Host: toIP(address),
-					Port: port,
-				}),
-				Agent: toIP(agent),
-			})
-			registered = true
+		log.Debugf("Framework %+v has a port range, will register only first", t.Name)
+		var keys []int
+		for k := range t.Resources.Ports() {
+			keys = append(keys, k)
 		}
-	}
+		sort.Ints(keys)
+		port := t.Resources.Ports()[keys[0]]
 
-	if !registered {
+		m.Registry.Register(&registry.Service{
+			ID:      fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, port),
+			Name:    tname,
+			Port:    toPort(port),
+			Address: address,
+			Tags:    tags,
+			Check: GetCheck(t, &CheckVar{
+				Host: toIP(address),
+				Port: port,
+			}),
+			Agent: toIP(agent),
+		})
+	} else {
 		m.Registry.Register(&registry.Service{
 			ID:      fmt.Sprintf("%s:%s-%s:%s", m.ServiceIdPrefix, agent, tname, address),
 			Name:    tname,
