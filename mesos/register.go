@@ -103,10 +103,16 @@ func (m *Mesos) registerHost(s *registry.Service) {
 func (m *Mesos) registerTask(t *state.Task, agent string) {
 	var tags []string
 
+	if _, err := t.Label("consul"); err != nil {
+		// For migration purpose,
+		// we will not register applications with "consul" label
+		return
+	}
+
 	tname := cleanName(t.ID, m.Separator)
 	log.Debugf("original TaskName : (%v)", tname)
-	if t.Label("overrideTaskName") != "" {
-		tname = cleanName(t.Label("overrideTaskName"), m.Separator)
+	if value, err := t.Label("overrideTaskName"); err == nil {
+		tname = cleanName(value, m.Separator)
 		log.Debugf("overrideTaskName to : (%v)", tname)
 	}
 	if !m.TaskPrivilege.Allowed(tname) {
@@ -116,9 +122,8 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 
 	address := t.IP(m.IpOrder...)
 
-	l := t.Label("tags")
-	if l != "" {
-		tags = strings.Split(t.Label("tags"), ",")
+	if l, err := t.Label("tags"); err != nil {
+		tags = strings.Split(l, ",")
 	} else {
 		tags = []string{}
 	}

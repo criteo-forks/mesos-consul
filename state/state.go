@@ -2,6 +2,7 @@ package state
 
 import (
 	"bytes"
+	"errors"
 	"net"
 	"strconv"
 	"strings"
@@ -120,14 +121,14 @@ func (t *Task) IPs(srcs ...string) (ips []net.IP) {
 }
 
 // Label returns the label.Value of the key matching the passed in string
-func (t *Task) Label(name string) string {
+func (t *Task) Label(name string) (string, error) {
 	for _, l := range t.Labels {
 		if l.Key == name {
-			return l.Value
+			return l.Value, nil
 		}
 	}
 
-	return ""
+	return "", errors.New("no key")
 }
 
 // sources maps the string representation of IP sources to their functions.
