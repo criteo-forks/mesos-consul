@@ -1,13 +1,10 @@
 ---
 language: go
-
+go_import_path: github.com/CiscoCloud/mesos-consul
 go:
-  - 1.6
-  - tip
+  - 1.8
 
-install: go get -v -t ./....
-
-script: go test -v ./...
+script: go test -v $(go list ./... | grep -v vendor)
 
 before_deploy: make package
 deploy:
@@ -19,3 +16,5 @@ deploy:
   on:
     repo: criteo-forks/mesos-consul
     tags: true
+    branch: criteo
+    
