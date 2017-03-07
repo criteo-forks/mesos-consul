@@ -1,6 +1,7 @@
 package mesos
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -100,13 +101,12 @@ func (m *Mesos) registerHost(s *registry.Service) {
 	m.Registry.Register(s)
 }
 
-func (m *Mesos) registerTask(t *state.Task, agent string) {
+func (m *Mesos) registerTask(t *state.Task, agent string) error {
 	var tags []string
 
-	if _, err := t.Label("consul"); err != nil {
-		// For migration purpose,
-		// we will not register applications with "consul" label
-		return
+	if _, err := t.Label("consul"); err == nil {
+		// For migration purpose
+		return errors.New("Application with consul label")
 	}
 
 	tname := cleanName(t.ID, m.Separator)
@@ -116,8 +116,7 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 		log.Debugf("overrideTaskName to : (%v)", tname)
 	}
 	if !m.TaskPrivilege.Allowed(tname) {
-		// Task not allowed to be registered
-		return
+		return errors.New("Task not allowed to be registered")
 	}
 
 	address := t.IP(m.IpOrder...)
@@ -199,6 +198,7 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 			Agent: toIP(agent),
 		})
 	}
+	return nil
 }
 
 // buildRegisterTaskTags takes a cleaned task name, a slice of starting tags, and the processed
