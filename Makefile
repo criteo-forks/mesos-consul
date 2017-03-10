@@ -16,6 +16,7 @@ test:
 xcompile: test
 	@rm -rf build/
 	@mkdir -p build
+	go get github.com/mitchellh/gox
 	gox \
 		-os="darwin" \
 		-os="dragonfly" \
