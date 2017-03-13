@@ -1,23 +1,18 @@
----
 language: go
 go_import_path: github.com/CiscoCloud/mesos-consul
 go:
-  - 1.8
-
+- 1.8
 script: go test -v $(go list ./... | grep -v vendor)
-
 before_deploy:
-  - go get github.com/mitchellh/gox
-  - gox -output="build/{{.Dir}}_{{.OS}}_{{.Arch}}"
+- go get github.com/mitchellh/gox
+- gox -output="build/{{.Dir}}_{{.OS}}_{{.Arch}}"
 deploy:
   provider: releases
   api_key:
-    secure: QvVp76F68zh7yKtAaEwh582MxI4UCIhs1vUDknJPSNbYUM6H5oT2epTbXVpQaRTjfQVcT0ymgoxVXM2OERE7WhL5uYtHKmXapUs9B3AMwZSmR5a8nJMsHVxLGJigPswVvEniTEuSZ/AHym/46//StZAei1NIMUCvcSTQj5eJn0AMWFAxTm48xJDFK7VOY0ewRYbZRsIL6lePxozTbrdqHapot8jd1AVqY/EJOvaJmW63o45arESl3HiGN6UPJa9z2HjQo1Gu9vWHOWRx0eUCp7wS4kpRjoqSRpj8K2T9FixzJoZo7UIbdYLz2E+GYaLguMhALZ1l2s3NEXliDhAjmOiio1VpW80fjW5mAx5RPpaRVQJRdU4prSTb24gRcNnfNGCPYX3JuwfftM5ubPmx4kcbDcZI7s1LR3Np4axSWJrgZ5PBxNtmSEAdx/x7YC/XxOnU7yFwLCduxAntsJIInEClXuArZvaDO+ZE8KLHdovQDDX1b5KZGxwy9OJb4b7tvb1om1Us657f0/yPf2fKR8hLkf54PSHPDmT55xpdpy5WLgc7qX9lVAw20qtYosn3/vUHIoWXmUPPT/7DyycJl7G0CSx4g9vWBQxB0Z3GIIHxbc/F+sMAhZ8og+9JgZHhMwvfU+SPXjo5XtRWb/PCq2iNdE/GY2mf/hQih6egmn0=
+    secure: tSI0CLteEAhwGfJOazyDIK/H85JrYEKh1K577RS3Be8lSS/QMvl2Rn0LuIgn/6YG55Jt2KbXrwlRuhe0scB4VXM/QrHBCNo5SiaYcy7MfGqRFS3QjENYRPyocxXRZTYFCzH8bHAYsydR00TZtonfEWv/BLReF3JwTnBUXuleaVbCmLWVGtYOCBCcSGil6CIDMENt8rh6n6zAFvqPTC3MuvaNsXVYeXlMW66GrHV9BuC4ogeLnDg9BAbmvVvfxT3hz/UFrhQRmlpZ21zh0CaN1kRS+m9DeJrilNuzw0OuADK3FIn+17cyZBoAmDqFxV4rxdRbI42LAdL4vUHoEX4ElChwOzsXKxAIH+LvVBVDcJfOhLxDupxwl2Zo6O9L+z4S9iGhxacFJyXxSujlsQeDfIoOowRDg0TNCTiXWBrNMPcDYiHb3Vkg2qujuLD53zYSY1jhypNlapjpvCgwMGFLK+tuZ4Y9ZiinqmuIiDcVDVOrViyCQ2Jj5EM+I0oz/JwBAHODgC6EIU5+T6DupMTH4c9CqtoPhKxnDL2cDDgCimH+w/ijvVA2fQ/H9i5Y3qVp/m689nZIKFh0Cgxc44nfrfbZwv3DCnUj7xVmRGVxYCFncfIbnS/XUFWpo94nUdrJc4lcF5ZyWeU659umkvQhNu5YHB58YETDpdkqWBu0SJ8=
   file: build/*
   file_glob: true
   skip_cleanup: true
   on:
     repo: criteo-forks/mesos-consul
     tags: true
-    branch: criteo
-    
