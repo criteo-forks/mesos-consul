@@ -121,7 +121,7 @@ func (m *Mesos) registerTask(t *state.Task, agent string) error {
 
 	address := t.IP(m.IpOrder...)
 
-	if l, err := t.Label("tags"); err != nil {
+	if l, err := t.Label("tags"); err == nil {
 		tags = strings.Split(l, ",")
 	} else {
 		tags = []string{}
