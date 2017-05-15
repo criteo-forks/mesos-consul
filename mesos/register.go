@@ -3,7 +3,6 @@ package mesos
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -129,63 +128,60 @@ func (m *Mesos) registerTask(t *state.Task, agent string) error {
 
 	tags = buildRegisterTaskTags(tname, tags, m.taskTag)
 
-	for key := range t.DiscoveryInfo.Ports.DiscoveryPorts {
-		var porttags []string
-		discoveryPort := state.DiscoveryPort(t.DiscoveryInfo.Ports.DiscoveryPorts[key])
-		serviceName := discoveryPort.Name
-		servicePort := strconv.Itoa(discoveryPort.Number)
-		pl := discoveryPort.Label("tags")
-		if pl != "" {
-			porttags = strings.Split(discoveryPort.Label("tags"), ",")
-		} else {
-			porttags = []string{}
+	if t.DiscoveryInfo.Name != "" {
+		// Loop over DiscoveryInfo Ports
+		for key, discoveryPort := range t.DiscoveryInfo.Ports.DiscoveryPorts {
+			var porttags []string
+			serviceName := discoveryPort.Name
+			servicePort := strconv.Itoa(discoveryPort.Number)
+			pl := discoveryPort.Label("tags")
+			if pl != "" {
+				porttags = strings.Split(discoveryPort.Label("tags"), ",")
+			} else {
+				porttags = []string{}
+			}
+			// Register the first port of the array as the main service
+			if key == 0 {
+				// TODO: propose an alternative logic, i.e. the register first non-labelled port
+				log.Debugf("Will register the first port for Task %+v", t.Name)
+				m.Registry.Register(&registry.Service{
+					ID:      fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, servicePort),
+					Name:    tname,
+					Port:    toPort(servicePort),
+					Address: address,
+					Tags:    tags,
+					Check: GetCheck(t, &CheckVar{
+						Host: toIP(address),
+						Port: servicePort,
+					}),
+					Agent: toIP(agent),
+				})
+			}
+			// Register every named port as a service
+			if discoveryPort.Name != "" {
+				log.Debugf("%+v framework has %+v as a name for %+v port",
+					t.Name,
+					discoveryPort.Name,
+					discoveryPort.Number)
+					named_service := cleanName(tname+"-"+discoveryPort.Name, m.Separator)
+				log.Debugf("%+v: changing the service name from %+v to %+v",
+					t.Name,
+					tname,
+					named_service)
+				m.Registry.Register(&registry.Service{
+					ID:      fmt.Sprintf("%s:%s:%s:%s:%d", m.ServiceIdPrefix, agent, tname, address, discoveryPort.Number),
+					Name:    named_service,
+					Port:    toPort(servicePort),
+					Address: address,
+					Tags:    append(append(tags, serviceName), porttags...),
+					Check: GetCheck(t, &CheckVar{
+						Host: toIP(address),
+						Port: servicePort,
+					}),
+					Agent: toIP(agent),
+				})
+			}
 		}
-		if discoveryPort.Name != "" {
-			log.Debugf("%+v framework has %+v as a name for %+v port",
-				t.Name,
-				discoveryPort.Name,
-				discoveryPort.Number)
-			named_service := cleanName(tname+"-"+discoveryPort.Name, m.Separator)
-			log.Debugf("%+v: changing the service name from %+v to %+v",
-				t.Name,
-				tname,
-				named_service)
-			m.Registry.Register(&registry.Service{
-				ID:      fmt.Sprintf("%s:%s:%s:%s:%d", m.ServiceIdPrefix, agent, tname, address, discoveryPort.Number),
-				Name:    named_service,
-				Port:    toPort(servicePort),
-				Address: address,
-				Tags:    append(append(tags, serviceName), porttags...),
-				Check: GetCheck(t, &CheckVar{
-					Host: toIP(address),
-					Port: servicePort,
-				}),
-				Agent: toIP(agent),
-			})
-		}
-	}
-
-	if t.Resources.PortRanges != "" {
-		log.Debugf("Framework %+v has a port range, will register only first", t.Name)
-		var keys []int
-		for k := range t.Resources.Ports() {
-			keys = append(keys, k)
-		}
-		sort.Ints(keys)
-		port := t.Resources.Ports()[keys[0]]
-
-		m.Registry.Register(&registry.Service{
-			ID:      fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, port),
-			Name:    tname,
-			Port:    toPort(port),
-			Address: address,
-			Tags:    tags,
-			Check: GetCheck(t, &CheckVar{
-				Host: toIP(address),
-				Port: port,
-			}),
-			Agent: toIP(agent),
-		})
 	} else {
 		m.Registry.Register(&registry.Service{
 			ID:      fmt.Sprintf("%s:%s-%s:%s", m.ServiceIdPrefix, agent, tname, address),
